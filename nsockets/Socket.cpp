@@ -28,6 +28,21 @@ namespace nsockets {
   {
     memset( &mConnectionInfo, 0, sizeof( ConnectionInfo ) );
   }
+
+  void Socket::addListener( SocketListener* listener )
+  {
+    mListeners.push_back( listener );
+  }
+
+  void Socket::removeListener( SocketListener* listener )
+  {
+    mListeners.remove( listener );
+  }
+
+  SOCKET Socket::getRawSocket()
+  {
+    return mSocket;
+  }
   
   const Protocol Socket::getProtocol()
   {
