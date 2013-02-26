@@ -28,5 +28,11 @@
     <ClCompile Include="Socket.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TCPSocket.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Utilities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
