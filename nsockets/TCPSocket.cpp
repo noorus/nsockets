@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "nsockets.h"
 #include "nsocketsUtil.h"
 
@@ -121,6 +120,9 @@ namespace nsockets {
       throw new std::exception( "Couldn't select socket events" );
 
     mState = State_Connected;
+
+    for ( SocketListener* listener : mListeners )
+      listener->connectCallback( this );
   }
 
   uint32_t TCPSocket::write( const void* buffer, const uint32_t length )
@@ -179,7 +181,7 @@ namespace nsockets {
     if ( mState == State_Disconnected )
       return;
     if ( mSocket != INVALID_SOCKET )
-      shutdown( mSocket, SD_SEND );
+      ::shutdown( mSocket, SD_SEND );
     mState = State_Disconnecting;
   }
 
@@ -189,7 +191,7 @@ namespace nsockets {
       return;
     if ( mSocket != INVALID_SOCKET )
     {
-      shutdown( mSocket, SD_BOTH );
+      ::shutdown( mSocket, SD_BOTH );
       closesocket( mSocket );
       mSocket = INVALID_SOCKET;
     }

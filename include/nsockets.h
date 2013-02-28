@@ -1,9 +1,17 @@
 #pragma once
 
+#define NTDDI_VERSION NTDDI_WS08SP4
+#define _WIN32_WINNT _WIN32_WINNT_WS08
+#include <SDKDDKVer.h>
+
+#define WIN32_LEAN_AND_MEAN
+#define _WINSOCKAPI_
+#include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
 #include <stdint.h>
+#include <wchar.h>
 
 #include <exception>
 #include <string>
@@ -35,6 +43,7 @@ namespace nsockets {
 
   class SocketListener {
   public:
+    virtual void connectCallback( Socket* socket ) = 0;
     virtual void readCallback( Socket* socket ) = 0;
     virtual void closeCallback( Socket* socket ) = 0;
   };
@@ -81,14 +90,21 @@ namespace nsockets {
     TCPSocket();
     virtual ~TCPSocket();
     virtual const State& getState();
-    virtual void bind( const wstring& host, const wstring& service, Protocol protocol = Protocol_Any );
+    virtual void bind( const wstring& host, const wstring& service,
+      Protocol protocol = Protocol_Any );
     virtual void listen();
-    virtual void connect( const wstring& host, const wstring& service, Protocol protocol = Protocol_Any );
+    virtual void connect( const wstring& host, const wstring& service,
+      Protocol protocol = Protocol_Any );
     virtual uint32_t write( const void* buffer, const uint32_t length );
     virtual uint32_t read( void* buffer, uint32_t length );
     virtual void process();
     virtual void closeRequest();
     virtual void close();
   };
+
+  extern WSADATA g_wsaData;
+
+  void initialize();
+  void shutdown();
 
 }

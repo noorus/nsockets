@@ -1,8 +1,24 @@
-#include "stdafx.h"
 #include "nsockets.h"
 #include "nsocketsUtil.h"
 
 namespace nsockets {
+
+  WSADATA g_wsaData = { 0 };
+
+  void initialize()
+  {
+    WORD version = MAKEWORD( 2, 2 );
+    if ( WSAStartup( version, &g_wsaData ) )
+      throw new std::exception( "Winsock initialization failed" );
+    if ( g_wsaData.wVersion != version )
+      throw new std::exception( "Required Winsock version not available" );
+  }
+
+  void shutdown()
+  {
+    if ( g_wsaData.wVersion > 0 )
+      WSACleanup();
+  }
 
   namespace util {
 

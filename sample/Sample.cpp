@@ -1,17 +1,4 @@
-#define WIN32_LEAN_AND_MEAN
-#define _WINSOCKAPI_
-#include <windows.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <iphlpapi.h>
-#include <wchar.h>
-#include <exception>
-#include <memory>
-#include <string>
-#include <sstream>
-#include <vector>
 #include <boost/tokenizer.hpp>
-
 #include "nsockets.h"
 
 using std::string;
@@ -48,8 +35,8 @@ public:
   }
   void writeLine( string line )
   {
+    //printf_s( "-> %s\r\n", line.c_str() );
     line.append( "\r\n" );
-    printf_s( "-> %s", line.c_str() );
     socket.write( (const void*)&line[0], line.length() );
   }
   void handleLine( const string& line )
@@ -76,6 +63,10 @@ public:
       printf_s( "%s\r\n", line.c_str() );
     }
   }
+  virtual void connectCallback( Socket* _notused )
+  {
+    printf_s( "connected.\r\n" );
+  }
   virtual void readCallback( Socket* _notused )
   {
     uint8_t current[2048];
@@ -91,22 +82,21 @@ public:
       } else if ( current[i] > 0x1F ) {
         buffer.append( 1, (char)current[i] );
         if ( buffer.length() > 32678 )
-          throw new std::exception( "Something's fishy here; input buffer exceeded 32kB" );
+          throw new std::exception( "Input buffer exceeded 32kB" );
       }
     }
   }
   virtual void closeCallback( nsockets::Socket* _notused )
   {
-    wprintf_s( L"closed!\r\n" );
+    wprintf_s( L"closed.\r\n" );
   }
 };
 
 int wmain( int argc, wchar_t* argv[], wchar_t* envp[] )
 {
-  WSADATA wsaData;
-  WSAStartup( MAKEWORD(2,2), &wsaData );
   try
   {
+    nsockets::initialize();
     NaiveIRCClient ircClient(
       L"dreamhack.se.quakenet.org", L"6667" );
     ircClient.run();
@@ -119,6 +109,6 @@ int wmain( int argc, wchar_t* argv[], wchar_t* envp[] )
   {
     printf_s( "Unknown exception\r\n" );
   }
-  WSACleanup();
+  nsockets::shutdown();
   return EXIT_SUCCESS;
 }
