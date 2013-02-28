@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "nsockets.h"
+#include "nsocketsUtil.h"
 
 namespace nsockets {
 

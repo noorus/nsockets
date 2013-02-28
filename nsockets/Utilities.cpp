@@ -1,9 +1,10 @@
 #include "stdafx.h"
 #include "nsockets.h"
+#include "nsocketsUtil.h"
 
 namespace nsockets {
 
-  using namespace util;
+  namespace util {
 
   inline Protocol familyToProtocol( int family )
   {
@@ -25,6 +26,8 @@ namespace nsockets {
     case Protocol_IPv6: return PF_INET6; break;
     }
     return PF_UNSPEC;
+  }
+
   }
 
 }

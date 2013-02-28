@@ -1,5 +1,15 @@
 #pragma once
 
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <iphlpapi.h>
+#include <stdint.h>
+
+#include <exception>
+#include <string>
+#include <vector>
+#include <list>
+
 namespace nsockets {
 
   using std::wstring;
@@ -70,6 +80,7 @@ namespace nsockets {
   public:
     TCPSocket();
     virtual ~TCPSocket();
+    virtual const State& getState();
     virtual void bind( const wstring& host, const wstring& service, Protocol protocol = Protocol_Any );
     virtual void listen();
     virtual void connect( const wstring& host, const wstring& service, Protocol protocol = Protocol_Any );
@@ -79,10 +90,5 @@ namespace nsockets {
     virtual void closeRequest();
     virtual void close();
   };
-
-  namespace util {
-    inline Protocol familyToProtocol( int family );
-    inline int protocolToFamily( Protocol protocol );
-  }
 
 }

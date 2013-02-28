@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "nsockets.h"
+#include "nsocketsUtil.h"
 
 namespace nsockets {
 
@@ -10,6 +11,11 @@ namespace nsockets {
     if ( mNetworkEvent == WSA_INVALID_EVENT )
       throw new std::exception( "Couldn't create network event" );
     memset( &mErrors, 0, sizeof( Errors ) );
+  }
+
+  const TCPSocket::State& TCPSocket::getState()
+  {
+    return mState;
   }
 
   void TCPSocket::bind( const wstring& host, const wstring& service,
@@ -71,18 +77,23 @@ namespace nsockets {
     if ( mState != State_Disconnected )
       throw new std::exception( "Cannot connect, socket is not disconnected" );
 
-    ADDRINFOW resolve;
-    PADDRINFOW address = nullptr;
-    PADDRINFOW resolved = nullptr;
+    mState = State_Connecting;
 
-    memset( &resolve, 0, sizeof( ADDRINFOW ) );
+    ADDRINFOW resolve;
+    PADDRINFOW address = NULL;
+    PADDRINFOW resolved = NULL;
+
+    memset( &resolve, NULL, sizeof( ADDRINFOW ) );
 
     resolve.ai_family   = util::protocolToFamily( protocol );
     resolve.ai_socktype = SOCK_STREAM;
     resolve.ai_protocol = IPPROTO_TCP;
 
     if ( GetAddrInfoW( host.c_str(), service.c_str(), &resolve, &resolved ) )
+    {
+      mState = State_Disconnected;
       throw new std::exception( "Couldn't resolve" );
+    }
 
     for ( address = resolved; address != nullptr; address = address->ai_next )
     {
@@ -99,7 +110,10 @@ namespace nsockets {
     }
 
     if ( address == nullptr )
+    {
+      mState = State_Disconnected;
       throw new std::exception( "Couldn't connect" );
+    }
 
     mConnectionInfo.getFrom( mSocket, address, true );
 
