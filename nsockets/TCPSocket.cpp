@@ -8,7 +8,7 @@ namespace nsockets {
   {
     mNetworkEvent = WSACreateEvent();
     if ( mNetworkEvent == WSA_INVALID_EVENT )
-      throw new std::exception( "Couldn't create network event" );
+      EXCEPT_WSA( L"Couldn't create network event" );
     memset( &mErrors, 0, sizeof( Errors ) );
   }
 
@@ -21,7 +21,7 @@ namespace nsockets {
   Protocol protocol )
   {
     if ( mState != State_Disconnected )
-      throw new std::exception( "Cannot bind, socket is not disconnected" );
+      EXCEPT( L"Cannot bind, socket is not disconnected" );
 
     ADDRINFOW resolve;
     PADDRINFOW address = nullptr;
@@ -34,7 +34,7 @@ namespace nsockets {
     resolve.ai_protocol = IPPROTO_TCP;
 
     if ( GetAddrInfoW( host.c_str(), service.c_str(), &resolve, &resolved ) )
-      throw new std::exception( "Couldn't resolve" );
+      EXCEPT_WSA( L"Couldn't resolve" );
 
     for ( address = resolved; address != nullptr; address = address->ai_next )
     {
@@ -51,7 +51,7 @@ namespace nsockets {
     }
 
     if ( address == nullptr )
-      throw new std::exception( "Couldn't bind" );
+      EXCEPT_WSA( L"Couldn't bind" );
 
     mConnectionInfo.getFrom( mSocket, address, false );
   }
@@ -59,13 +59,13 @@ namespace nsockets {
   void TCPSocket::listen()
   {
     if ( mState != State_Disconnected )
-      throw new std::exception( "Cannot listen, socket is not disconnected" );
+      EXCEPT( L"Cannot listen, socket is not disconnected" );
 
     if ( WSAEventSelect( mSocket, mNetworkEvent, FD_ACCEPT | FD_CLOSE ) == SOCKET_ERROR )
-      throw new std::exception( "Couldn't select socket events" );
+      EXCEPT_WSA( L"Couldn't select socket events" );
 
     if ( ::listen( mSocket, SOMAXCONN ) == SOCKET_ERROR )
-      throw new std::exception( "Couldn't listen" );
+      EXCEPT_WSA( L"Couldn't listen" );
 
     mState = State_Listening;
   }
@@ -74,7 +74,7 @@ namespace nsockets {
   Protocol protocol )
   {
     if ( mState != State_Disconnected )
-      throw new std::exception( "Cannot connect, socket is not disconnected" );
+      EXCEPT( L"Cannot connect, socket is not disconnected" );
 
     mState = State_Connecting;
 
@@ -91,7 +91,7 @@ namespace nsockets {
     if ( GetAddrInfoW( host.c_str(), service.c_str(), &resolve, &resolved ) )
     {
       mState = State_Disconnected;
-      throw new std::exception( "Couldn't resolve" );
+      EXCEPT_WSA( L"Couldn't resolve" );
     }
 
     for ( address = resolved; address != nullptr; address = address->ai_next )
@@ -111,13 +111,13 @@ namespace nsockets {
     if ( address == nullptr )
     {
       mState = State_Disconnected;
-      throw new std::exception( "Couldn't connect" );
+      EXCEPT_WSA( L"Couldn't connect" );
     }
 
     mConnectionInfo.getFrom( mSocket, address, true );
 
     if ( WSAEventSelect( mSocket, mNetworkEvent, FD_READ | FD_CLOSE ) == SOCKET_ERROR )
-      throw new std::exception( "Couldn't select socket events" );
+      EXCEPT_WSA( L"Couldn't select socket events" );
 
     mState = State_Connected;
 
@@ -128,20 +128,20 @@ namespace nsockets {
   uint32_t TCPSocket::write( const void* buffer, const uint32_t length )
   {
     if ( mSocket == INVALID_SOCKET )
-      throw new std::exception( "Cannot write, socket is invalid" );
+      EXCEPT( L"Cannot write, socket does not exist" );
     int written = send( mSocket, (const char*)buffer, length, 0 );
     if ( written == SOCKET_ERROR )
-      throw new std::exception( "Socket write failed" );
+      EXCEPT_WSA( L"Socket write failed" );
     return written;
   }
 
   uint32_t TCPSocket::read( void* buffer, uint32_t length )
   {
     if ( mSocket == INVALID_SOCKET )
-      throw new std::exception( "Cannot read, socket is invalid" );
+      EXCEPT( L"Cannot read, socket does not exist" );
     int _read = recv( mSocket, (char*)buffer, length, 0 );
     if ( _read == SOCKET_ERROR )
-      throw new std::exception( "Socket read failed" );
+      EXCEPT_WSA( L"Socket read failed" );
     return _read;
   }
 
@@ -149,9 +149,12 @@ namespace nsockets {
   {
     if ( mSocket == INVALID_SOCKET )
       return;
+
     WSANETWORKEVENTS events;
+
     if ( WSAEnumNetworkEvents( mSocket, mNetworkEvent, &events ) == SOCKET_ERROR )
-      throw new std::exception( "Socket network event processing error" );
+      EXCEPT_WSA( L"Socket network event processing error" );
+
     if ( events.lNetworkEvents & FD_READ )
     {
       if ( events.iErrorCode[FD_READ_BIT] != 0 ) {
@@ -164,6 +167,7 @@ namespace nsockets {
       for ( SocketListener* listener : mListeners )
         listener->readCallback( this );
     }
+
     if ( events.lNetworkEvents & FD_CLOSE )
     {
       if ( events.iErrorCode[FD_CLOSE_BIT] != 0 ) {
@@ -180,8 +184,10 @@ namespace nsockets {
   {
     if ( mState == State_Disconnected )
       return;
+
     if ( mSocket != INVALID_SOCKET )
       ::shutdown( mSocket, SD_SEND );
+
     mState = State_Disconnecting;
   }
 
@@ -189,13 +195,16 @@ namespace nsockets {
   {
     if ( mState == State_Disconnected )
       return;
+
     if ( mSocket != INVALID_SOCKET )
     {
       ::shutdown( mSocket, SD_BOTH );
       closesocket( mSocket );
       mSocket = INVALID_SOCKET;
     }
+
     mState = State_Disconnected;
+
     for ( SocketListener* listener : mListeners )
       listener->closeCallback( this );
   }

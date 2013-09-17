@@ -9,9 +9,9 @@ namespace nsockets {
   {
     WORD version = MAKEWORD( 2, 2 );
     if ( WSAStartup( version, &g_wsaData ) )
-      throw new std::exception( "Winsock initialization failed" );
+      EXCEPT_WSA( L"Winsock initialization failed" );
     if ( g_wsaData.wVersion != version )
-      throw new std::exception( "Required Winsock version not available" );
+      EXCEPT_WSA( L"Required Winsock version not available" );
   }
 
   void shutdown()
@@ -22,27 +22,47 @@ namespace nsockets {
 
   namespace util {
 
-  inline Protocol familyToProtocol( int family )
-  {
-    switch ( family )
+    inline Protocol familyToProtocol( int family )
     {
-      case PF_UNSPEC: return Protocol_Any; break;
-      case PF_INET:   return Protocol_IPv4; break;
-      case PF_INET6:  return Protocol_IPv6; break;
+      switch ( family )
+      {
+        case PF_UNSPEC: return Protocol_Any; break;
+        case PF_INET:   return Protocol_IPv4; break;
+        case PF_INET6:  return Protocol_IPv6; break;
+      }
+      return Protocol_Unknown;
     }
-    return Protocol_Unknown;
-  }
 
-  inline int protocolToFamily( Protocol protocol )
-  {
-    switch ( protocol )
+    inline int protocolToFamily( Protocol protocol )
     {
-    case Protocol_Any:  return PF_UNSPEC; break;
-    case Protocol_IPv4: return PF_INET; break;
-    case Protocol_IPv6: return PF_INET6; break;
+      switch ( protocol )
+      {
+        case Protocol_Any:  return PF_UNSPEC; break;
+        case Protocol_IPv4: return PF_INET; break;
+        case Protocol_IPv6: return PF_INET6; break;
+      }
+      return PF_UNSPEC;
     }
-    return PF_UNSPEC;
-  }
+
+    inline wstring utf8ToWide( const string& in ) throw ()
+    {
+      int length = MultiByteToWideChar( CP_UTF8, 0, in.c_str(), -1, nullptr, 0 );
+      if ( length == 0 )
+        return wstring();
+      vector<wchar_t> conversion( length );
+      MultiByteToWideChar( CP_UTF8, 0, in.c_str(), -1, &conversion[0], length );
+      return wstring( &conversion[0] );
+    }
+
+    inline string wideToUtf8( const wstring& in ) throw()
+    {
+      int length = WideCharToMultiByte( CP_UTF8, 0, in.c_str(), -1, nullptr, 0, 0, FALSE );
+      if ( length == 0 )
+        return string();
+      vector<char> conversion( length );
+      WideCharToMultiByte( CP_UTF8, 0, in.c_str(), -1, &conversion[0], length, 0, FALSE );
+      return string( &conversion[0] );
+    }
 
   }
 

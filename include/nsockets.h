@@ -17,11 +17,49 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <sstream>
+#include <boost/variant.hpp>
 
 namespace nsockets {
 
   using std::wstring;
+  using std::string;
   using std::list;
+  using std::vector;
+  using std::wstringstream;
+  using boost::variant;
+
+  //! \class WinAPIError
+  //! Container for a Windows API error description.
+  struct WinAPIError {
+  public:
+    uint32_t code;
+    wstring description;
+  };
+
+  //! \class Exception
+  //! Main exception class for nsocket errors. Descendant of std::exception.
+  class Exception: public std::exception {
+  public:
+    enum Type {
+      Generic = 0,
+      Winsock
+    };
+  private:
+    Exception();
+  protected:
+    Type mType;
+    wstring mDescription;
+    wstring mSource;
+    mutable wstring mFullDescription;
+    variant<WinAPIError> mAdditional;
+    void handleAdditional();
+  public:
+    Exception( const wstring& description, Type type = Generic );
+    Exception( const wstring& description, const wstring& source, Type type = Generic );
+    virtual const wstring& getFullDescription() const;
+    virtual const char* what() const throw();
+  };
 
   enum Protocol: uint32_t {
     Protocol_Any = 0,
@@ -30,6 +68,8 @@ namespace nsockets {
     Protocol_Unknown
   };
 
+  //! \class ConnectionIfo
+  //! Socket information container.
   struct ConnectionInfo {
   public:
     WCHAR hostAddress[NI_MAXHOST];
@@ -41,6 +81,9 @@ namespace nsockets {
 
   class Socket;
 
+  //! \class SocketListener
+  //! Pure virtual nsocket listener base class.
+  //! Listeners are used to handle socket events.
   class SocketListener {
   public:
     virtual void connectCallback( Socket* socket ) = 0;
@@ -50,11 +93,13 @@ namespace nsockets {
 
   typedef list<SocketListener*> SocketListenerList;
 
+  //! \class Socket
+  //! Non-specific socket base class.
   class Socket {
   protected:
-    volatile SOCKET mSocket;
-    ConnectionInfo mConnectionInfo;
-    SocketListenerList mListeners;
+    volatile SOCKET mSocket; //!< Winsock socket handle
+    ConnectionInfo mConnectionInfo; //!< Connection information struct
+    SocketListenerList mListeners; //!< List of subscribed listeners
   public:
     Socket();
     SOCKET getRawSocket();
@@ -64,6 +109,8 @@ namespace nsockets {
     virtual void removeListener( SocketListener* listener );
   };
 
+  //! \class TCPSocket
+  //! TCP socket class. Descendant of Socket.
   class TCPSocket: public Socket {
   public:
     enum State: uint32_t {
@@ -80,7 +127,7 @@ namespace nsockets {
     };
   protected:
     volatile WSAEVENT mNetworkEvent;
-    State mState;
+    State mState; //!< Socket state
     CloseReason mCloseReason;
     struct Errors {
       int closeEventError;
@@ -104,7 +151,7 @@ namespace nsockets {
 
   extern WSADATA g_wsaData;
 
-  void initialize();
-  void shutdown();
+  void initialize(); //!< Initialize Winsock for nsockets usage.
+  void shutdown(); //!< Shutdown Winsock after usage.
 
 }

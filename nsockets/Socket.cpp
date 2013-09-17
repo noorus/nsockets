@@ -14,12 +14,12 @@ namespace nsockets {
       ret = getsockname( socket, (LPSOCKADDR)&socketAddress, &length );
 
     if ( ret == SOCKET_ERROR )
-      throw new std::exception( "Couldn't fetch socket/peer name" );
+      EXCEPT_WSA( L"Couldn't fetch socket/peer name" );
 
     ret = GetNameInfoW( (LPSOCKADDR)&socketAddress, length, hostAddress,
       NI_MAXHOST, hostService, NI_MAXSERV, NI_NUMERICHOST );
     if ( ret )
-      throw new std::exception( "Couldn't fetch socket name info" );
+      EXCEPT_WSA( L"Couldn't fetch socket name info" );
 
     memcpy_s( &addressInfo, sizeof( addressInfo ), paddress, sizeof( addressInfo ) );
   }
