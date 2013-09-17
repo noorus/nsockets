@@ -5,9 +5,9 @@ namespace nsockets {
 
   void ConnectionInfo::getFrom( SOCKET socket, PADDRINFOW paddress, bool remote )
   {
+    int ret;
     int length = sizeof( socketAddress );
 
-    int ret;
     if ( remote )
       ret = getpeername( socket, (LPSOCKADDR)&socketAddress, &length );
     else

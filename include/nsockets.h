@@ -110,7 +110,7 @@ namespace nsockets {
   };
 
   //! \class TCPSocket
-  //! TCP socket class. Descendant of Socket.
+  //! TCP socket base class. Descendant of Socket.
   class TCPSocket: public Socket {
   public:
     enum State: uint32_t {
@@ -126,27 +126,40 @@ namespace nsockets {
       Close_Error
     };
   protected:
-    volatile WSAEVENT mNetworkEvent;
     State mState; //!< Socket state
     CloseReason mCloseReason;
     struct Errors {
       int closeEventError;
       int readEventError;
     } mErrors;
+    bool mOverlapped;
+    TCPSocket( bool overlapped );
   public:
-    TCPSocket();
     virtual ~TCPSocket();
     virtual const State& getState();
     virtual void bind( const wstring& host, const wstring& service,
       Protocol protocol = Protocol_Any );
+    virtual void listen() = 0;
+    virtual void connect( const wstring& host, const wstring& service,
+      Protocol protocol ) = 0;
+    virtual uint32_t write( const void* buffer, const uint32_t length );
+    virtual uint32_t read( void* buffer, uint32_t length );
+    virtual void closeRequest();
+    virtual void close();
+  };
+
+  //! \class EventTCPSocket
+  //! Network event-based TCP socket class. Descendant of TCPSocket.
+  class EventTCPSocket: public TCPSocket {
+  protected:
+    volatile WSAEVENT mNetworkEvent;
+  public:
+    EventTCPSocket( bool overlapped = false );
+    virtual ~EventTCPSocket();
     virtual void listen();
     virtual void connect( const wstring& host, const wstring& service,
       Protocol protocol = Protocol_Any );
-    virtual uint32_t write( const void* buffer, const uint32_t length );
-    virtual uint32_t read( void* buffer, uint32_t length );
     virtual void process();
-    virtual void closeRequest();
-    virtual void close();
   };
 
   extern WSADATA g_wsaData;

@@ -170,6 +170,7 @@
     <ClInclude Include="nsocketsUtil.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="EventTCPSocket.cpp" />
     <ClCompile Include="Exception.cpp" />
     <ClCompile Include="Socket.cpp" />
     <ClCompile Include="TCPSocket.cpp" />

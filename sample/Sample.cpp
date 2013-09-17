@@ -18,7 +18,7 @@ void tokenize( const string& str, string delims, vector<string>& result )
 
 class NaiveIRCClient: public SocketListener {
 protected:
-  TCPSocket socket;
+  EventTCPSocket socket;
   string buffer;
 public:
   NaiveIRCClient( const wstring& host, const wstring& port )
