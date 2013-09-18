@@ -44,7 +44,8 @@ namespace nsockets {
   public:
     enum Type {
       Generic = 0,
-      Winsock
+      Winsock,
+      WinAPI
     };
   private:
     Exception();

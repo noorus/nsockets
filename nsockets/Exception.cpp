@@ -22,22 +22,25 @@ namespace nsockets {
 
   void Exception::handleAdditional()
   {
-    switch ( mType )
+    WinAPIError error;
+
+    if ( mType == Winsock )
+      error.code = WSAGetLastError();
+    else if ( mType == WinAPI )
+      error.code = GetLastError();
+
+    if ( mType == Winsock || mType == WinAPI )
     {
-      case Winsock:
-        WinAPIError error;
-        LPWSTR message = nullptr;
-        error.code = WSAGetLastError();
-        FormatMessageW(
-          FORMAT_MESSAGE_ALLOCATE_BUFFER |
-          FORMAT_MESSAGE_FROM_SYSTEM |
-          FORMAT_MESSAGE_IGNORE_INSERTS,
-          NULL, error.code, MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),
-          (LPWSTR)&message, 0, NULL );
-        error.description = message;
-        LocalFree( message );
-        mAdditional = error;
-      break;
+      LPWSTR message = nullptr;
+      FormatMessageW(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER |
+        FORMAT_MESSAGE_FROM_SYSTEM |
+        FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL, error.code, MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),
+        (LPWSTR)&message, 0, NULL );
+      error.description = message;
+      LocalFree( message );
+      mAdditional = error;
     }
   }
 
@@ -52,12 +55,15 @@ namespace nsockets {
       if ( !mSource.empty() )
         stream << L"\r\nIn function " << mSource;
 
-      switch ( mType )
+      if ( mType == Winsock )
       {
-        case Winsock:
-          const WinAPIError& error = boost::get<WinAPIError>( mAdditional );
-          stream << L"\r\nWSA error code " << std::hex << error.code << L":\r\n" << error.description;
-        break;
+        const WinAPIError& wsaError = boost::get<WinAPIError>( mAdditional );
+        stream << L"\r\nWinsock error code " << std::hex << wsaError.code << L":\r\n" << wsaError.description;
+      }
+      else if ( mType == WinAPI )
+      {
+        const WinAPIError& error = boost::get<WinAPIError>( mAdditional );
+        stream << L"\r\nWinAPI error code " << std::hex << error.code << L":\r\n" << error.description;
       }
 
       mFullDescription = stream.str();
