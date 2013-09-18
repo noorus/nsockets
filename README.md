@@ -10,7 +10,7 @@ Features:
 * Native IPv4 & IPv6 support
 * Unicode strings throughout
 * Listener-, event- & exception-based architechture
-* Profiles for x32 & x64 compiles
+* Profiles for x86 & x64 compiles
 * Ready for threading
 
 Upcoming:
