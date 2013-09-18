@@ -4,8 +4,8 @@
 namespace nsockets {
 
   namespace util {
-    extern inline Protocol familyToProtocol( int family );
-    extern inline int protocolToFamily( Protocol protocol );
+    extern inline Protocol familyToProtocol( uint16_t family );
+    extern inline uint16_t protocolToFamily( Protocol protocol );
     extern inline wstring utf8ToWide( const string& in ) throw();
     extern inline string wideToUtf8( const wstring& in ) throw();
   }

@@ -170,10 +170,12 @@
     <ClInclude Include="nsocketsUtil.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ConnectionInfo.cpp" />
     <ClCompile Include="EventTCPSocket.cpp" />
     <ClCompile Include="Exception.cpp" />
     <ClCompile Include="Socket.cpp" />
     <ClCompile Include="TCPSocket.cpp" />
+    <ClCompile Include="UDPSocket.cpp" />
     <ClCompile Include="Utilities.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

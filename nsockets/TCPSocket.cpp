@@ -4,7 +4,7 @@
 namespace nsockets {
 
   TCPSocket::TCPSocket( bool overlapped ): Socket(),
-  mState( State_Disconnected ), mOverlapped( overlapped )
+  mState( State_Closed ), mOverlapped( overlapped )
   {
     memset( &mErrors, 0, sizeof( Errors ) );
   }
@@ -17,8 +17,8 @@ namespace nsockets {
   void TCPSocket::bind( const wstring& host, const wstring& service,
   Protocol protocol )
   {
-    if ( mState != State_Disconnected )
-      EXCEPT( L"Cannot bind, socket is not disconnected" );
+    if ( mState != State_Closed )
+      EXCEPT( L"Cannot bind, socket is not closed" );
 
     ADDRINFOW resolve;
     PADDRINFOW address = nullptr;
@@ -54,7 +54,7 @@ namespace nsockets {
     if ( address == nullptr )
       EXCEPT_WSA( L"Couldn't bind" );
 
-    mConnectionInfo.getFrom( mSocket, address, false );
+    mConnectionInfo.update( mSocket, false );
   }
 
   uint32_t TCPSocket::write( const void* buffer, const uint32_t length )
@@ -79,18 +79,18 @@ namespace nsockets {
 
   void TCPSocket::closeRequest()
   {
-    if ( mState == State_Disconnected )
+    if ( mState == State_Closed )
       return;
 
     if ( mSocket != INVALID_SOCKET )
       ::shutdown( mSocket, SD_SEND );
 
-    mState = State_Disconnecting;
+    mState = State_Closing;
   }
 
   void TCPSocket::close()
   {
-    if ( mState == State_Disconnected )
+    if ( mState == State_Closed )
       return;
 
     if ( mSocket != INVALID_SOCKET )
@@ -100,10 +100,11 @@ namespace nsockets {
       mSocket = INVALID_SOCKET;
     }
 
-    mState = State_Disconnected;
+    mState = State_Closed;
 
     for ( SocketListener* listener : mListeners )
-      listener->closeCallback( this );
+      if ( listener->closeCallback( this ) )
+        break;
   }
 
   TCPSocket::~TCPSocket()

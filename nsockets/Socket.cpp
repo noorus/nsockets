@@ -3,27 +3,6 @@
 
 namespace nsockets {
 
-  void ConnectionInfo::getFrom( SOCKET socket, PADDRINFOW paddress, bool remote )
-  {
-    int ret;
-    int length = sizeof( socketAddress );
-
-    if ( remote )
-      ret = getpeername( socket, (LPSOCKADDR)&socketAddress, &length );
-    else
-      ret = getsockname( socket, (LPSOCKADDR)&socketAddress, &length );
-
-    if ( ret == SOCKET_ERROR )
-      EXCEPT_WSA( L"Couldn't fetch socket/peer name" );
-
-    ret = GetNameInfoW( (LPSOCKADDR)&socketAddress, length, hostAddress,
-      NI_MAXHOST, hostService, NI_MAXSERV, NI_NUMERICHOST );
-    if ( ret )
-      EXCEPT_WSA( L"Couldn't fetch socket name info" );
-
-    memcpy_s( &addressInfo, sizeof( addressInfo ), paddress, sizeof( addressInfo ) );
-  }
-
   Socket::Socket(): mSocket( INVALID_SOCKET )
   {
     memset( &mConnectionInfo, 0, sizeof( ConnectionInfo ) );
@@ -39,14 +18,14 @@ namespace nsockets {
     mListeners.remove( listener );
   }
 
-  SOCKET Socket::getRawSocket()
+  SOCKET Socket::getRawSocket() const throw()
   {
     return mSocket;
   }
   
-  const Protocol Socket::getProtocol()
+  const Protocol Socket::getProtocol() const throw()
   {
-    return util::familyToProtocol( mConnectionInfo.addressInfo.ai_family );
+    return mConnectionInfo.getProtocol();
   }
 
   const ConnectionInfo& Socket::getConnectionInfo()

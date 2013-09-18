@@ -22,18 +22,19 @@ namespace nsockets {
 
   namespace util {
 
-    inline Protocol familyToProtocol( int family )
+    inline Protocol familyToProtocol( uint16_t family )
     {
-      switch ( family )
-      {
-        case PF_UNSPEC: return Protocol_Any; break;
-        case PF_INET:   return Protocol_IPv4; break;
-        case PF_INET6:  return Protocol_IPv6; break;
-      }
-      return Protocol_Unknown;
+      if ( family == PF_UNSPEC || family == AF_UNSPEC )
+        return Protocol_Any;
+      else if ( family == PF_INET || family == AF_INET )
+        return Protocol_IPv4;
+      else if ( family == PF_INET6 || family == AF_INET6 )
+        return Protocol_IPv6;
+      else
+        return Protocol_Unknown;
     }
 
-    inline int protocolToFamily( Protocol protocol )
+    inline uint16_t protocolToFamily( Protocol protocol )
     {
       switch ( protocol )
       {

@@ -2,6 +2,7 @@
 #include "nsockets.h"
 
 using std::string;
+using std::wstring;
 using std::vector;
 using boost::char_separator;
 using boost::tokenizer;
@@ -30,7 +31,7 @@ public:
   {
     writeLine( "NICK nsockets" );
     writeLine( "USER nsockets 0 * :nsockets" );
-    while ( socket.getState() != TCPSocket::State_Disconnected )
+    while ( socket.getState() != TCPSocket::State_Closed )
       socket.process();
   }
   void writeLine( string line )
@@ -63,11 +64,21 @@ public:
       printf_s( "%s\r\n", line.c_str() );
     }
   }
-  virtual void connectCallback( Socket* _notused )
+  virtual bool acceptCallback( Socket* _notused )
   {
-    printf_s( "connected.\r\n" );
+    return false;
   }
-  virtual void readCallback( Socket* _notused )
+  virtual bool connectCallback( Socket* socket )
+  {
+    wprintf_s( L"connected - %s:%s -> %s:%s\r\n",
+      socket->getConnectionInfo().getLocalAddress().c_str(),
+      socket->getConnectionInfo().getLocalService().c_str(),
+      socket->getConnectionInfo().getRemoteAddress().c_str(),
+      socket->getConnectionInfo().getRemoteService().c_str()
+      );
+    return true;
+  }
+  virtual bool readCallback( Socket* _notused )
   {
     uint8_t current[2048];
     uint32_t read = socket.read( &current, 2048 );
@@ -85,10 +96,12 @@ public:
           throw new std::exception( "Input buffer exceeded 32kB" );
       }
     }
+    return true;
   }
-  virtual void closeCallback( nsockets::Socket* _notused )
+  virtual bool closeCallback( nsockets::Socket* _notused )
   {
     wprintf_s( L"closed.\r\n" );
+    return true;
   }
 };
 

@@ -61,7 +61,7 @@ namespace nsockets {
     virtual const char* what() const throw();
   };
 
-  enum Protocol: uint32_t {
+  enum Protocol {
     Protocol_Any = 0,
     Protocol_IPv4,
     Protocol_IPv6,
@@ -71,24 +71,35 @@ namespace nsockets {
   //! \class ConnectionIfo
   //! Socket information container.
   struct ConnectionInfo {
+  protected:
+    wstring mRemoteAddress;
+    wstring mRemoteService;
+    wstring mLocalAddress;
+    wstring mLocalService;
+    Protocol mProtocol;
+    void reset();
   public:
-    WCHAR hostAddress[NI_MAXHOST];
-    WCHAR hostService[NI_MAXSERV];
-    SOCKADDR_STORAGE socketAddress;
-    ADDRINFOW addressInfo;
-    void getFrom( SOCKET socket, PADDRINFOW address, bool remote );
+    const wstring& getRemoteAddress() const throw();
+    const wstring& getRemoteService() const throw();
+    const wstring& getLocalAddress() const throw();
+    const wstring& getLocalService() const throw();
+    const Protocol getProtocol() const throw();
+  public:
+    ConnectionInfo();
+    void update( SOCKET socket, bool remote );
   };
 
   class Socket;
 
   //! \class SocketListener
-  //! Pure virtual nsocket listener base class.
+  //! Pure virtual socket listener base class.
   //! Listeners are used to handle socket events.
   class SocketListener {
   public:
-    virtual void connectCallback( Socket* socket ) = 0;
-    virtual void readCallback( Socket* socket ) = 0;
-    virtual void closeCallback( Socket* socket ) = 0;
+    virtual bool acceptCallback( Socket* socket ) = 0;
+    virtual bool connectCallback( Socket* socket ) = 0;
+    virtual bool readCallback( Socket* socket ) = 0;
+    virtual bool closeCallback( Socket* socket ) = 0;
   };
 
   typedef list<SocketListener*> SocketListenerList;
@@ -100,24 +111,34 @@ namespace nsockets {
     volatile SOCKET mSocket; //!< Winsock socket handle
     ConnectionInfo mConnectionInfo; //!< Connection information struct
     SocketListenerList mListeners; //!< List of subscribed listeners
-  public:
     Socket();
-    SOCKET getRawSocket();
-    const Protocol getProtocol();
+  public:
+    SOCKET getRawSocket() const throw();
+    const Protocol getProtocol() const throw();
     const ConnectionInfo& getConnectionInfo();
     virtual void addListener( SocketListener* listener );
     virtual void removeListener( SocketListener* listener );
+  };
+
+  //! \class UDPSocket
+  //! UDP socket class. Descendant of Socket.
+  class UDPSocket: public Socket {
+  public:
+    UDPSocket();
+    virtual ~UDPSocket();
+    virtual void setReceiver( const wstring& host, const wstring& service,
+      Protocol protocol = Protocol_Any );
   };
 
   //! \class TCPSocket
   //! TCP socket base class. Descendant of Socket.
   class TCPSocket: public Socket {
   public:
-    enum State: uint32_t {
-      State_Disconnected = 0,
+    enum State {
+      State_Closed = 0,
       State_Connecting,
       State_Connected,
-      State_Disconnecting,
+      State_Closing,
       State_Listening
     };
     enum CloseReason {
@@ -129,6 +150,7 @@ namespace nsockets {
     State mState; //!< Socket state
     CloseReason mCloseReason;
     struct Errors {
+      int acceptEventError;
       int closeEventError;
       int readEventError;
     } mErrors;
@@ -140,6 +162,7 @@ namespace nsockets {
     virtual void bind( const wstring& host, const wstring& service,
       Protocol protocol = Protocol_Any );
     virtual void listen() = 0;
+    virtual void accept( TCPSocket* socket ) = 0;
     virtual void connect( const wstring& host, const wstring& service,
       Protocol protocol ) = 0;
     virtual uint32_t write( const void* buffer, const uint32_t length );
@@ -157,6 +180,7 @@ namespace nsockets {
     EventTCPSocket( bool overlapped = false );
     virtual ~EventTCPSocket();
     virtual void listen();
+    virtual void accept( TCPSocket* socket );
     virtual void connect( const wstring& host, const wstring& service,
       Protocol protocol = Protocol_Any );
     virtual void process();
