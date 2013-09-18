@@ -1,13 +1,13 @@
 #include <boost/tokenizer.hpp>
 #include "nsockets.h"
 
-using std::string;
-using std::wstring;
 using std::vector;
 using boost::char_separator;
 using boost::tokenizer;
 
 using namespace nsockets;
+
+HANDLE stopEvent;
 
 void tokenize( const string& str, string delims, vector<string>& result )
 {
@@ -27,22 +27,19 @@ public:
     socket.addListener( this );
     socket.connect( host, port );
   }
-  void run()
+  void run( HANDLE event )
   {
     writeLine( "NICK nsockets" );
     writeLine( "USER nsockets 0 * :nsockets" );
-    while ( socket.getState() != TCPSocket::State_Closed )
-      socket.process();
+    socket.loop( event, 1000, 5000 );
   }
   void writeLine( string line )
   {
-    //printf_s( "-> %s\r\n", line.c_str() );
     line.append( "\r\n" );
     socket.write( (const void*)&line[0], line.length() );
   }
   void handleLine( const string& line )
   {
-    // printf_s( "<- %s\r\n", line.c_str() );
     vector<string> tokens;
     string freeline;
     tokenize( line, " ", tokens );
@@ -64,21 +61,26 @@ public:
       printf_s( "%s\r\n", line.c_str() );
     }
   }
-  virtual bool acceptCallback( Socket* _notused )
+  virtual bool idleCallback( Socket* _socket )
+  {
+    wprintf_s( L"idling...\r\n" );
+    return true;
+  }
+  virtual bool acceptCallback( Socket* _socket )
   {
     return false;
   }
-  virtual bool connectCallback( Socket* socket )
+  virtual bool connectCallback( Socket* _socket )
   {
     wprintf_s( L"connected - %s:%s -> %s:%s\r\n",
-      socket->getConnectionInfo().getLocalAddress().c_str(),
-      socket->getConnectionInfo().getLocalService().c_str(),
-      socket->getConnectionInfo().getRemoteAddress().c_str(),
-      socket->getConnectionInfo().getRemoteService().c_str()
+      _socket->getConnectionInfo().getLocalAddress().c_str(),
+      _socket->getConnectionInfo().getLocalService().c_str(),
+      _socket->getConnectionInfo().getRemoteAddress().c_str(),
+      _socket->getConnectionInfo().getRemoteService().c_str()
       );
     return true;
   }
-  virtual bool readCallback( Socket* _notused )
+  virtual bool readCallback( Socket* _socket )
   {
     uint8_t current[2048];
     uint32_t read = socket.read( &current, 2048 );
@@ -98,21 +100,34 @@ public:
     }
     return true;
   }
-  virtual bool closeCallback( nsockets::Socket* _notused )
+  virtual bool closeCallback( Socket* _socket )
   {
     wprintf_s( L"closed.\r\n" );
     return true;
   }
 };
 
+BOOL WINAPI consoleHandler( DWORD ctrl )
+{
+  if ( ctrl == CTRL_C_EVENT || ctrl == CTRL_CLOSE_EVENT )
+  {
+    SetEvent( stopEvent );
+    return TRUE;
+  }
+  return FALSE;
+}
+
 int wmain( int argc, wchar_t* argv[], wchar_t* envp[] )
 {
   try
   {
     nsockets::initialize();
+    stopEvent = CreateEventW( 0, FALSE, FALSE, 0 );
+    SetConsoleCtrlHandler( consoleHandler, TRUE );
     NaiveIRCClient ircClient(
       L"dreamhack.se.quakenet.org", L"6667" );
-    ircClient.run();
+    ircClient.run( stopEvent );
+    CloseHandle( stopEvent );
   }
   catch ( std::exception& e )
   {

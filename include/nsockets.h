@@ -21,9 +21,10 @@
 #include <boost/variant.hpp>
 
 namespace nsockets {
+  
+  typedef std::string string;
+  typedef std::wstring wstring;
 
-  using std::wstring;
-  using std::string;
   using std::list;
   using std::vector;
   using std::wstringstream;
@@ -96,6 +97,7 @@ namespace nsockets {
   //! Listeners are used to handle socket events.
   class SocketListener {
   public:
+    virtual bool idleCallback( Socket* socket ) = 0;
     virtual bool acceptCallback( Socket* socket ) = 0;
     virtual bool connectCallback( Socket* socket ) = 0;
     virtual bool readCallback( Socket* socket ) = 0;
@@ -184,6 +186,7 @@ namespace nsockets {
     virtual void connect( const wstring& host, const wstring& service,
       Protocol protocol = Protocol_Any );
     virtual void process();
+    virtual void loop( HANDLE stopEvent, uint32_t idleTimeout = 0, uint32_t closeTimeout = 5000 );
   };
 
   extern WSADATA g_wsaData;

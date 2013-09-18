@@ -12,6 +12,12 @@ namespace nsockets {
       EXCEPT_WSA( L"Couldn't create network event" );
   }
 
+  EventTCPSocket::~EventTCPSocket()
+  {
+    if ( mNetworkEvent != WSA_INVALID_EVENT )
+      WSACloseEvent( mNetworkEvent );
+  }
+
   void EventTCPSocket::listen()
   {
     if ( mState != State_Closed )
@@ -158,10 +164,47 @@ namespace nsockets {
     }
   }
 
-  EventTCPSocket::~EventTCPSocket()
+  void EventTCPSocket::loop( HANDLE stopEvent, uint32_t idleTimeout, uint32_t closeTimeout )
   {
-    if ( mNetworkEvent != WSA_INVALID_EVENT )
-      WSACloseEvent( mNetworkEvent );
+    if ( mSocket == INVALID_SOCKET )
+      EXCEPT( L"Cannot loop, invalid socket" );
+
+    WSAEVENT events[2] = { (WSAEVENT)stopEvent, mNetworkEvent };
+
+    while ( mState != State_Closed )
+    {
+      DWORD wait = ( idleTimeout > 0 ? idleTimeout : WSA_INFINITE );
+      if ( mState == State_Closing )
+        wait = closeTimeout;
+
+      DWORD event = WSAWaitForMultipleEvents( 2, events, FALSE, wait, FALSE );
+
+      switch ( event )
+      {
+        case WSA_WAIT_FAILED:
+          EXCEPT_WSA( L"Socket event wait failed" );
+        break;
+        case WSA_WAIT_TIMEOUT:
+          if ( mState == State_Closing )
+          {
+            mCloseReason = Close_Unexpected;
+            close();
+          }
+          else
+          {
+            for ( SocketListener* listener : mListeners )
+              if ( listener->idleCallback( this ) )
+                break;
+          }
+        break;
+        case WSA_WAIT_EVENT_0:
+          closeRequest();
+        break;
+        case WSA_WAIT_EVENT_0 + 1:
+          process();
+        break;
+      }
+    }
   }
 
 }

@@ -10,9 +10,9 @@ Features:
 * Native IPv4 & IPv6 support
 * Unicode strings throughout
 * Listener-, event- & exception-based architechture
-* No globals, ready for threading
 * Profiles for x32 & x64 compiles
+* Ready for threading
 
 Upcoming:
 * UDP sockets
-* Overlapped I/O completion port support
+* Overlapped I/O completion port sockets
