@@ -99,6 +99,8 @@ namespace nsockets {
       mState = State_Closed;
       EXCEPT_WSA( L"Couldn't connect" );
     }
+
+    mBound = true;
     
     mConnectionInfo.update( mSocket, false );
     mConnectionInfo.update( mSocket, true );
