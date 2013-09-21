@@ -192,6 +192,10 @@ namespace nsockets {
     virtual void loop( HANDLE stopEvent, uint32_t idleTimeout = 0, uint32_t closeTimeout = 5000 );
   };
 
+  class IOCPListenerTCPSocket: public TCPSocket {
+    //
+  };
+
   extern WSADATA g_wsaData;
 
   void initialize(); //!< Initialize Winsock for nsockets usage.

@@ -145,6 +145,7 @@ int wmain( int argc, wchar_t* argv[], wchar_t* envp[] )
     NaiveIRCClient ircClient(
       L"dreamhack.se.quakenet.org", L"6667" );
     ircClient.run( stopEvent );
+    SetConsoleCtrlHandler( NULL, FALSE );
     CloseHandle( stopEvent );
   }
   catch ( std::exception& e )

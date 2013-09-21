@@ -45,7 +45,7 @@ namespace nsockets {
       return PF_UNSPEC;
     }
 
-    inline wstring utf8ToWide( const string& in ) throw ()
+    inline wstring utf8ToWide( const string& in ) throw()
     {
       int length = MultiByteToWideChar( CP_UTF8, 0, in.c_str(), -1, nullptr, 0 );
       if ( length == 0 )
