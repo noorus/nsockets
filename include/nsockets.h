@@ -58,7 +58,8 @@ namespace nsockets {
     void handleAdditional();
   public:
     Exception( const wstring& description, Type type = Generic );
-    Exception( const wstring& description, const wstring& source, Type type = Generic );
+    Exception( const wstring& description, const wstring& source,
+      Type type = Generic );
     virtual const wstring& getFullDescription() const;
     virtual const char* what() const throw();
   };
@@ -151,8 +152,8 @@ namespace nsockets {
     };
   protected:
     State mState; //!< Socket state
-    CloseReason mCloseReason;
-    struct Errors {
+    CloseReason mCloseReason; //!< Socket disconnection result
+    struct Errors { //!< Last socket error codes
       int acceptError;
       int closeError;
       int readError;
@@ -189,7 +190,8 @@ namespace nsockets {
     virtual void connect( const wstring& host, const wstring& service,
       Protocol protocol = Protocol_Any );
     virtual void process();
-    virtual void loop( HANDLE stopEvent, uint32_t idleTimeout = 0, uint32_t closeTimeout = 5000 );
+    virtual void loop( HANDLE stopEvent, uint32_t idleTimeout = 0,
+      uint32_t closeTimeout = 5000 );
   };
 
   class IOCPListenerTCPSocket: public TCPSocket {
