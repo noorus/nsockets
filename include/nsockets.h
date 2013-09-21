@@ -10,6 +10,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <iphlpapi.h>
+#include <mstcpip.h>
 #include <stdint.h>
 #include <wchar.h>
 
@@ -159,6 +160,7 @@ namespace nsockets {
       int readError;
     } mErrors;
     bool mOverlapped;
+    bool mBound;
     TCPSocket( bool overlapped );
   public:
     virtual ~TCPSocket();
@@ -168,6 +170,9 @@ namespace nsockets {
     virtual void bind( const wstring& host, const wstring& service,
       Protocol protocol = Protocol_Any );
     virtual void listen() = 0;
+    virtual void disableNagle( bool disable );
+    virtual void setExclusiveAddr( bool exclusive );
+    virtual void setKeepAlive( bool keepalive, uint32_t milliseconds );
     virtual void accept( TCPSocket* socket ) = 0;
     virtual void connect( const wstring& host, const wstring& service,
       Protocol protocol ) = 0;

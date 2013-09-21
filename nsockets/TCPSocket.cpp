@@ -4,7 +4,7 @@
 namespace nsockets {
 
   TCPSocket::TCPSocket( bool overlapped ): Socket(),
-  mState( State_Closed ), mOverlapped( overlapped )
+  mState( State_Closed ), mOverlapped( overlapped ), mBound( false )
   {
     memset( &mErrors, 0, sizeof( Errors ) );
   }
@@ -22,6 +22,48 @@ namespace nsockets {
   const TCPSocket::CloseReason TCPSocket::getCloseReason()
   {
     return mCloseReason;
+  }
+
+  void TCPSocket::disableNagle( bool disable )
+  {
+    if ( mSocket == INVALID_SOCKET )
+      EXCEPT( L"Cannot modify socket options, socket does not exist" );
+
+    BOOL value = disable ? TRUE : FALSE;
+
+    if ( setsockopt( mSocket, IPPROTO_TCP, TCP_NODELAY,
+      reinterpret_cast<const char*>(&value), sizeof( value ) ) == SOCKET_ERROR )
+      EXCEPT_WSA( L"Couldn't disable Nagle on socket" );
+  }
+
+  void TCPSocket::setExclusiveAddr( bool exclusive )
+  {
+    if ( mSocket == INVALID_SOCKET )
+      EXCEPT( L"Cannot modify socket options, socket does not exist" );
+
+    if ( mBound )
+      EXCEPT( L"Cannot set local address exclusivity on a bound socket" );
+
+    BOOL value = exclusive ? 1 : 0;
+
+    if ( setsockopt( mSocket, SOL_SOCKET, SO_EXCLUSIVEADDRUSE,
+      reinterpret_cast<const char*>(&value), sizeof( value ) ) == SOCKET_ERROR )
+      EXCEPT_WSA( L"Couldn't set local address exclusivity on socket" );
+  }
+
+  void TCPSocket::setKeepAlive( bool keepalive, uint32_t milliseconds )
+  {
+    if ( mSocket == INVALID_SOCKET )
+      EXCEPT( L"Cannot modify socket options, socket does not exist" );
+
+    tcp_keepalive value;
+    value.onoff             = keepalive ? 1 : 0;
+    value.keepalivetime     = milliseconds;
+    value.keepaliveinterval = milliseconds;
+
+    DWORD returned;
+    if ( !WSAIoctl( mSocket, SIO_KEEPALIVE_VALS, &value, sizeof( value ), nullptr, 0, &returned, nullptr, nullptr ) )
+      EXCEPT_WSA( L"Couldn't set keepalive values on socket" );
   }
 
   void TCPSocket::bind( const wstring& host, const wstring& service,
@@ -63,6 +105,8 @@ namespace nsockets {
 
     if ( address == nullptr )
       EXCEPT_WSA( L"Couldn't bind" );
+
+    mBound = true;
 
     mConnectionInfo.update( mSocket, false );
   }
