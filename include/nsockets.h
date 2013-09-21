@@ -153,15 +153,17 @@ namespace nsockets {
     State mState; //!< Socket state
     CloseReason mCloseReason;
     struct Errors {
-      int acceptEventError;
-      int closeEventError;
-      int readEventError;
+      int acceptError;
+      int closeError;
+      int readError;
     } mErrors;
     bool mOverlapped;
     TCPSocket( bool overlapped );
   public:
     virtual ~TCPSocket();
     virtual const State& getState();
+    virtual const Errors& getErrors();
+    virtual const CloseReason getCloseReason();
     virtual void bind( const wstring& host, const wstring& service,
       Protocol protocol = Protocol_Any );
     virtual void listen() = 0;

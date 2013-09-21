@@ -32,6 +32,24 @@ public:
     writeLine( "NICK nsockets" );
     writeLine( "USER nsockets 0 * :nsockets" );
     socket.loop( event, 1000, 5000 );
+    nsockets::TCPSocket::CloseReason cr = socket.getCloseReason();
+    switch ( cr )
+    {
+      case nsockets::TCPSocket::Close_Error:
+        wprintf_s( L"Socket close reason: Close_Error\r\n" );
+      break;
+      case nsockets::TCPSocket::Close_Graceful:
+        wprintf_s( L"Socket close reason: Close_Graceful\r\n" );
+      break;
+      case nsockets::TCPSocket::Close_Unexpected:
+        wprintf_s( L"Socket close reason: Close_Unexpected\r\n" );
+      break;
+    }
+    wprintf_s( L"Socket errors: 0x%X, 0x%X, 0x%X\r\n",
+      socket.getErrors().acceptError,
+      socket.getErrors().closeError,
+      socket.getErrors().readError
+    );
   }
   void writeLine( string line )
   {

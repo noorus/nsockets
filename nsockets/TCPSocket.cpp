@@ -14,6 +14,16 @@ namespace nsockets {
     return mState;
   }
 
+  const TCPSocket::Errors& TCPSocket::getErrors()
+  {
+    return mErrors;
+  }
+
+  const TCPSocket::CloseReason TCPSocket::getCloseReason()
+  {
+    return mCloseReason;
+  }
+
   void TCPSocket::bind( const wstring& host, const wstring& service,
   Protocol protocol )
   {

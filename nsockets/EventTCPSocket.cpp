@@ -127,7 +127,7 @@ namespace nsockets {
     {
       if ( events.iErrorCode[FD_ACCEPT_BIT] != 0 )
       {
-        mErrors.acceptEventError = events.iErrorCode[FD_ACCEPT_BIT];
+        mErrors.acceptError = events.iErrorCode[FD_ACCEPT_BIT];
         mState = State_Closing;
         mCloseReason = Close_Error;
         close();
@@ -141,7 +141,7 @@ namespace nsockets {
     if ( events.lNetworkEvents & FD_READ )
     {
       if ( events.iErrorCode[FD_READ_BIT] != 0 ) {
-        mErrors.readEventError = events.iErrorCode[FD_READ_BIT];
+        mErrors.readError = events.iErrorCode[FD_READ_BIT];
         mState = State_Closing;
         mCloseReason = Close_Error;
         close();
@@ -155,7 +155,7 @@ namespace nsockets {
     if ( events.lNetworkEvents & FD_CLOSE )
     {
       if ( events.iErrorCode[FD_CLOSE_BIT] != 0 ) {
-        mErrors.closeEventError = events.iErrorCode[FD_CLOSE_BIT];
+        mErrors.closeError = events.iErrorCode[FD_CLOSE_BIT];
         mState = State_Closing;
         mCloseReason = Close_Error;
       } else
