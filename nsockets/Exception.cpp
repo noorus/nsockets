@@ -38,8 +38,11 @@ namespace nsockets {
         FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL, error.code, MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),
         (LPWSTR)&message, 0, NULL );
-      error.description = message;
-      LocalFree( message );
+      if ( message )
+      {
+        error.description = message;
+        LocalFree( message );
+      }
       mAdditional = error;
     }
   }
