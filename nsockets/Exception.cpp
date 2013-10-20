@@ -73,7 +73,8 @@ namespace nsockets {
 
   const char* Exception::what() const
   {
-    return util::wideToUtf8( getFullDescription() ).c_str();
+    mUTF8Description = util::wideToUtf8( getFullDescription() );
+    return mUTF8Description.c_str();
   }
 
 }

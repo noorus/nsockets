@@ -55,6 +55,7 @@ namespace nsockets {
     wstring mDescription;
     wstring mSource;
     mutable wstring mFullDescription;
+    mutable string mUTF8Description;
     variant<WinAPIError> mAdditional;
     void handleAdditional();
   public:
