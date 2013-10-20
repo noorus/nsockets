@@ -11,13 +11,13 @@ namespace nsockets {
   Exception::Exception( const wstring& description, Type type ):
   mDescription( description ), mType( type )
   {
-    // Stub
+    handleAdditional();
   }
 
   Exception::Exception( const wstring& description, const wstring& source, Type type ):
   mDescription( description ), mSource( source ), mType( type )
   {
-    // Stub
+    handleAdditional();
   }
 
   void Exception::handleAdditional()
